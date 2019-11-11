@@ -21,9 +21,9 @@
 
 测试集正确率100%
 
-https://github.com/sarsbug/NLPAssignment/tree/master/results/1.png
-https://github.com/sarsbug/NLPAssignment/tree/master/results/2.png
-https://github.com/sarsbug/NLPAssignment/tree/master/results/3.png
+![image](https://github.com/sarsbug/NLPAssignment/tree/master/results/1.png)
+![image](https://github.com/sarsbug/NLPAssignment/tree/master/results/2.png)
+![image](https://github.com/sarsbug/NLPAssignment/tree/master/results/3.png)
 
 
 
