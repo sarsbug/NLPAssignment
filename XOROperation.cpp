@@ -19,7 +19,7 @@ namespace xorop{
 //    int N = (TRAIN_N-TEST_N);
     int N = 16; //产生的训练数据为0~N两两异或
     int TN = 5; //产生的测试数据为N~N+TN两两异或
-    int M = 6;  //每个输入表示成二进制，用int[M]存储
+    int M = 7;  //每个输入表示成二进制，用int[M]存储
     int H = 10; //隐藏层大小
     void decToBin(int num,int* decNum);
     void generate_data(int** X,int** Y,int S,int E);
@@ -47,7 +47,7 @@ namespace xorop{
         XORModel model;
         model.h_size = H;
         const int dataSize = N*N;
-        //const int testDataSize = 3;
+        const int testDataSize = TN*TN;
         model.devID = 0;
         Init(model);
 
@@ -55,16 +55,17 @@ namespace xorop{
         Train(trainX, trainY, dataSize, model);
 
         cout<<"-----Test 训练集-----"<<endl;
-        Test(trainX,trainY, N*N, model);
+        Test(trainX,trainY, dataSize, model);
 
         cout<<"-----Test 测试集-----"<<endl;
         int** testX = new int*[TN*TN];
         int** testY = new int*[TN*TN];
         generate_data(testX,testY,N,N+TN);
-        for(int i=0;i<TN*TN;i++){
-            show_num(testY[i],M);
-        }
-        Test(testX,testY, TN*TN, model);
+//        for(int i=0;i<TN*TN;i++){
+//            show_num(testX[i],2*M);
+//            show_num(testY[i],M);
+//        }
+        Test(testX,testY,testDataSize, model);
 
         delete[] trainX;
         delete[] trainY;
@@ -112,10 +113,16 @@ namespace xorop{
                 int r = i ^k;
 
                 int *num1 = new int[M];
+                for(int l=0;l<M;l++)
+                    num1[l]=0;
                 decToBin(i, num1);
                 int *num2 = new int[M];
+                for(int l=0;l<M;l++)
+                    num2[l]=0;
                 decToBin(k, num2);
                 int *result = new int[M];
+                for(int l=0;l<M;l++)
+                    result[l]=0;
                 decToBin(r, result);
 
                 int *num = new int[2 * M];
@@ -128,16 +135,17 @@ namespace xorop{
                 memcpy(X[index], num, 2 * M * sizeof(int));
                 memcpy(Y[index], result, M * sizeof(int));
 
-                if(index==48){
-                    show_result(num1,num2,num,result);
-                    cout<<"trainX[index]";
-                    show_num(X[index],2*M);
-                    show_num(Y[index],M);
-                }
+//                if(index==0){
+//                    cout<<"i:"<<i<<" k:"<<k<<" r:"<<r<<endl;
+//                    show_result(num1,num2,num,result);
+//                    cout<<"trainX[index]";
+//                    show_num(X[index],2*M);
+//                    show_num(Y[index],M);
+//                }
                 index++;
             }
         }
-        //cout<<index<<endl;
+        cout<<"产生数据数:"<<index<<endl;
     }
 
     void show_num(int* num,int length){
@@ -313,8 +321,11 @@ namespace xorop{
                 }
             }
             if(i<5){
+                cout<<"输入:";
                 show_num(testX[i],2*M);
+                cout<<"预测结果:";
                 show_num(result,M);
+                cout<<"实际结果:";
                 show_num(testY[i],M);
             }
             if(compare(testY[i],result)){
