@@ -14,7 +14,7 @@ namespace xorop{
     int nEpoch = 100;                      // max training epochs
     float minmax = 0.01F;                 // range [-p,p] for parameter initialization
 
-    int N = 7;  //产生的测试数据为0~7两两异或
+    int N = 8;  //产生的测试数据为0~7两两异或
     int M = 4;  //每个输入表示成二进制，用int[4]存储
     void decToBin(int num,int* decNum);
     void generate_train_data(int** trainX,int** trainY);
