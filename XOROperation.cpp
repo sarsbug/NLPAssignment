@@ -17,10 +17,12 @@ namespace xorop{
 //    int TRAIN_N = 16;  //产生的训练数据为8~N两两异或
 //    int TEST_N = 7; //产生的测试数据为0~TN两两异或
 //    int N = (TRAIN_N-TEST_N);
-    int N = 16;
+    int N = 16; //产生的训练数据为0~N两两异或
+    int TN = 5; //产生的测试数据为N~N+TN两两异或
     int M = 6;  //每个输入表示成二进制，用int[M]存储
+    int H = 10; //隐藏层大小
     void decToBin(int num,int* decNum);
-    void generate_train_data(int** trainX,int** trainY);
+    void generate_data(int** X,int** Y,int S,int E);
     void show_num(int* num,int length);
     void show_result(int* num1,int* num2,int* num,int* result);
     void convertIntToFloat(int** X,int** Y,float** trainX,float** trainY);
@@ -40,21 +42,10 @@ namespace xorop{
     {
         int** trainX = new int*[N*N];
         int** trainY = new int*[N*N];
-        generate_train_data(trainX,trainY);
-        //float** trainX = new float*[N*N];
-        //float** trainY = new float*[N];
-        //convertIntToFloat(X,Y,trainX,trainY);
-
-        /*
-        for(int i=0;i<N*N;i++){
-            cout<<"trainX["<<i<<"]";
-            show_num(trainX[i],2*M);
-            cout<<"trainX["<<i<<"]";
-            show_num(trainY[i],M);
-        }*/
+        generate_data(trainX,trainY,0,N);
 
         XORModel model;
-        model.h_size = 5;
+        model.h_size = H;
         const int dataSize = N*N;
         //const int testDataSize = 3;
         model.devID = 0;
@@ -63,11 +54,22 @@ namespace xorop{
 
         Train(trainX, trainY, dataSize, model);
 
-        cout<<"-----Test-----"<<endl;
+        cout<<"-----Test 训练集-----"<<endl;
         Test(trainX,trainY, N*N, model);
+
+        cout<<"-----Test 测试集-----"<<endl;
+        int** testX = new int*[TN*TN];
+        int** testY = new int*[TN*TN];
+        generate_data(testX,testY,N,N+TN);
+        for(int i=0;i<TN*TN;i++){
+            show_num(testY[i],M);
+        }
+        Test(testX,testY, TN*TN, model);
 
         delete[] trainX;
         delete[] trainY;
+        delete[] testX;
+        delete[] testY;
         return 0;
     }
 
@@ -103,10 +105,10 @@ namespace xorop{
         }
     }
 
-    void generate_train_data(int** trainX,int** trainY) {
+    void generate_data(int** X,int** Y,int S,int E) {
         int index = 0;
-        for (int i = 0; i < N; i++) {
-            for (int k = 0; k < N; k++) {
+        for (int i = S; i < E; i++) {
+            for (int k = S; k <E ; k++) {
                 int r = i ^k;
 
                 int *num1 = new int[M];
@@ -121,16 +123,17 @@ namespace xorop{
                 memcpy(num, num1, size);
                 memcpy(num + M, num2, size);
 
-                trainX[index] = new int[2 * M];
-                trainY[index] = new int[M];
-                memcpy(trainX[index], num, 2 * M * sizeof(int));
-                memcpy(trainY[index], result, M * sizeof(int));
-                /*
+                X[index] = new int[2 * M];
+                Y[index] = new int[M];
+                memcpy(X[index], num, 2 * M * sizeof(int));
+                memcpy(Y[index], result, M * sizeof(int));
+
                 if(index==48){
                     show_result(num1,num2,num,result);
                     cout<<"trainX[index]";
-                    show_num(trainX[index],2*M);
-                }*/
+                    show_num(X[index],2*M);
+                    show_num(Y[index],M);
+                }
                 index++;
             }
         }
@@ -312,6 +315,7 @@ namespace xorop{
             if(i<5){
                 show_num(testX[i],2*M);
                 show_num(result,M);
+                show_num(testY[i],M);
             }
             if(compare(testY[i],result)){
                 c ++;
