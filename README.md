@@ -22,8 +22,8 @@
 测试集正确率100%
 
 ![训练后的损失](https://github.com/sarsbug/NLPAssignment/blob/master/results/1.png)
-![训练集前5个结果及全部数据的正确率](https://github.com/sarsbug/NLPAssignment/tree/master/results/2.png)
-![测试集前5个结果及全部数据的正确率](https://github.com/sarsbug/NLPAssignment/tree/master/results/3.png)
+![训练集前5个结果及全部数据的正确率](https://github.com/sarsbug/NLPAssignment/blob/master/results/2.png)
+![测试集前5个结果及全部数据的正确率](https://github.com/sarsbug/NLPAssignment/blob/master/results/3.png)
 
 
 
