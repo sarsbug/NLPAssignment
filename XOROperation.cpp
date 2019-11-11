@@ -14,13 +14,17 @@ namespace xorop{
     int nEpoch = 100;                      // max training epochs
     float minmax = 0.01F;                 // range [-p,p] for parameter initialization
 
-    int N = 8;  //产生的测试数据为0~7两两异或
-    int M = 4;  //每个输入表示成二进制，用int[4]存储
+//    int TRAIN_N = 16;  //产生的训练数据为8~N两两异或
+//    int TEST_N = 7; //产生的测试数据为0~TN两两异或
+//    int N = (TRAIN_N-TEST_N);
+    int N = 16;
+    int M = 6;  //每个输入表示成二进制，用int[M]存储
     void decToBin(int num,int* decNum);
     void generate_train_data(int** trainX,int** trainY);
     void show_num(int* num,int length);
     void show_result(int* num1,int* num2,int* num,int* result);
     void convertIntToFloat(int** X,int** Y,float** trainX,float** trainY);
+    bool compare(int* num1,int* num2);
 
     void Init(XORModel &model);
     void Train(int** trainX, int**trainY, int dataSize, XORModel &model);
@@ -30,7 +34,7 @@ namespace xorop{
     void Backward(XTensor &input, XTensor &gold, XORModel &model, XORModel &grad, XORNet &net);
     void Update(XORModel &model, XORModel &grad, float learningRate);
     void CleanGrad(XORModel &grad);
-    void Test(int **testData, int testDataSize, XORModel &model);
+    void Test(int **testData,int** testY, int testDataSize, XORModel &model);
 
     int XORMain(int argc, const char ** argv)
     {
@@ -59,12 +63,23 @@ namespace xorop{
 
         Train(trainX, trainY, dataSize, model);
 
-        int testX[M] = {0,1,0,1,0,0,1,1};
-        Test(trainX, 1, model);
+        cout<<"-----Test-----"<<endl;
+        Test(trainX,trainY, N*N, model);
 
         delete[] trainX;
         delete[] trainY;
         return 0;
+    }
+
+    bool compare(int* num1,int* num2){
+        bool flag = true;
+        for(int i=0;i<M;i++){
+            if(num1[i]!=num2[i]){
+                flag = false;
+                break;
+            }
+        }
+        return flag;
     }
 
     void convertIntToFloat(int** X,int** Y,float** trainX,float** trainY){
@@ -88,35 +103,35 @@ namespace xorop{
         }
     }
 
-    void generate_train_data(int** trainX,int** trainY){
+    void generate_train_data(int** trainX,int** trainY) {
         int index = 0;
-        for(int i=0;i<N;i++){
-            for(int k=0;k<N;k++){
-                int r = i^k;
+        for (int i = 0; i < N; i++) {
+            for (int k = 0; k < N; k++) {
+                int r = i ^k;
 
-                int* num1 = new int[M];
-                decToBin(i,num1);
-                int* num2 = new int[M];
-                decToBin(k,num2);
-                int* result = new int[M];
-                decToBin(r,result);
+                int *num1 = new int[M];
+                decToBin(i, num1);
+                int *num2 = new int[M];
+                decToBin(k, num2);
+                int *result = new int[M];
+                decToBin(r, result);
 
-                int* num = new int[2*M];
-                int size = M*sizeof(int);
-                memcpy(num,num1,size);
-                memcpy(num+M,num2,size);
+                int *num = new int[2 * M];
+                int size = M * sizeof(int);
+                memcpy(num, num1, size);
+                memcpy(num + M, num2, size);
 
-                trainX[index] = new int[2*M];
+                trainX[index] = new int[2 * M];
                 trainY[index] = new int[M];
-                memcpy(trainX[index],num,2*M*sizeof(int));
-                memcpy(trainY[index],result,M*sizeof(int));
+                memcpy(trainX[index], num, 2 * M * sizeof(int));
+                memcpy(trainY[index], result, M * sizeof(int));
                 /*
                 if(index==48){
                     show_result(num1,num2,num,result);
                     cout<<"trainX[index]";
                     show_num(trainX[index],2*M);
                 }*/
-                index ++;
+                index++;
             }
         }
         //cout<<index<<endl;
@@ -124,6 +139,8 @@ namespace xorop{
 
     void show_num(int* num,int length){
         for(int j=0;j<length;j++){
+            if(j==M)
+                cout<<"/";
             cout<<num[length-j-1];
         }
         cout<<endl;
@@ -222,7 +239,7 @@ namespace xorop{
         net.hidden_state1 = MatrixMul(input, model.weight1);
 
         net.hidden_state2 = net.hidden_state1 + model.b;
-        net.hidden_state3 = HardTanH(net.hidden_state2);
+        net.hidden_state3 = Sigmoid(net.hidden_state2);
 
         net.output = MatrixMul(net.hidden_state3, model.weight2);
     }
@@ -252,7 +269,7 @@ namespace xorop{
 
         XTensor dedy = MatrixMul(lossGrad, X_NOTRANS, model.weight2, X_TRANS);
 
-        _HardTanHBackward(&net.hidden_state3, &net.hidden_state2, &dedy, &dedb);
+        _SigmoidBackward(&net.hidden_state3, &net.hidden_state2, &dedy, &dedb);
 
         dedw1 = MatrixMul(input, X_TRANS, dedb, X_NOTRANS);
     }
@@ -271,28 +288,37 @@ namespace xorop{
         grad.weight2.SetZeroAll();
     }
 
-    void Test(int **testData, int testDataSize, XORModel &model)
+    void Test(int **testX,int** testY, int testDataSize, XORModel &model)
     {
         XORNet net;
         XTensor*  inputData = NewTensor2D(1, 2*M, X_FLOAT, model.devID);
-        for (int i = 0; i < testDataSize; ++i)
+        int c = 0;
+        for (int i = 0; i < testDataSize; i++)
         {
             for(int j=0;j<2*M;j++){
-                cout<<"-"<<endl;
-                inputData->Set2D(testData[i][j], 0, j);
-                cout<<"+"<<endl;
+                inputData->Set2D(testX[i][j], 0, j);
             }
-            cout<<"1"<<endl;
             Forword(*inputData, model, net);
-            cout<<"2"<<endl;
-            float ans = net.output.Get2D(0,M) ;
 
-            cout<<"3"<<endl;
-            //for(int k=0;k<M;k++){
-            //    cout<<ans[k];
-            //}
-            cout<<ans<<endl;
+            int* result = new int[M];
+            for(int j=0;j<M;j++){
+                float ans = net.output.Get2D(0,M-j-1) ;
+                if(ans>0.5){
+                    result[M-j-1] = 1;
+                }else{
+                    result[M-j-1] = 0;
+                }
+            }
+            if(i<5){
+                show_num(testX[i],2*M);
+                show_num(result,M);
+            }
+            if(compare(testY[i],result)){
+                c ++;
+            }
+            delete[] result;
         }
 
+        cout<<"accuracy:"<<float(c)/testDataSize*100<<"%"<<endl;
     }
 };
