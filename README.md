@@ -12,11 +12,19 @@
 
 4.测试结果
 
+
 完成程度:
 
 //测试结果，目前只测试了训练集，正确率只有35%,还在查找问题
 
 隐藏层调为10后，训练集正确率达到了100%
+
+测试集正确率100%
+
+https://github.com/sarsbug/NLPAssignment/tree/master/results/1.png
+https://github.com/sarsbug/NLPAssignment/tree/master/results/2.png
+https://github.com/sarsbug/NLPAssignment/tree/master/results/3.png
+
 
 
 意见建议:
